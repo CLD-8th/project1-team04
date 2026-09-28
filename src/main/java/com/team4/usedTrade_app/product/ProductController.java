@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -19,5 +21,11 @@ public class ProductController {
     public ProductDetailResponse detail(@PathVariable Integer productId) {
         // TODO: 로그인 사용자면 최근 본 상품 기록 (FR-07 방지은님 연동)
         return productService.getDetail(productId);
+    }
+
+    // FR-07 최근 본 상품 조회
+    @GetMapping("/recent")
+    public List<ProductDetailResponse> recentProducts() {
+        return productService.getRecentProducts(1);
     }
 }
