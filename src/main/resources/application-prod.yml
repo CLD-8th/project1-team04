@@ -1,0 +1,8 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate   # compose에서 update로 덮어씀
+
+app:
+  upload-dir: /app/uploads
+  
