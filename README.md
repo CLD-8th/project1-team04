@@ -46,16 +46,33 @@
 - RPO: 5분
     - 최대 5분 이내의 상품 등록 및 거래 상태 변경 데이터만 손실될 수 있도록 함
 
-  
+현재 Docker Compose 구성은 단일 Ubuntu 서버에서 실행하는 최소 동작 환경이다. 위 RTO·RPO는 목표이며, 백업·복구 절차가 없어 아직 검증되지 않았다.
+
+## 8. 프로젝트 설정
 
 | 항목 | 값 |
 | --- | --- |
 | 빌드 도구 | Gradle · Groovy |
 | 언어 | Java |
-| 프레임워크 버전 | 4.1.1 |
+| 프레임워크 버전 | Spring Boot 4.1.1 |
 | 그룹 | `com.team4` |
 | 이름 | `usedTrade-app` |
-| 패키지 | `com.team4.usedTrade-app` |
+| 패키지 | `com.team4.usedTrade_app` |
 | 포장 | Jar |
 | 개발 도구 버전 | 21 |
-| 의존성 | Spring Web |
+| 최초 선택 의존성 | Spring Web |
+| 추가 의존성 | Spring Data JPA, Spring Data Redis, Spring Session Data Redis, Actuator, Validation, Spring Security Crypto, Lombok, MySQL Driver |
+
+## 9. 현재 구현 및 실행
+
+현재 브랜치는 Spring Boot 앱과 MySQL·Redis의 실행 기반을 제공한다. 상품·거래 API와 최근 본 상품 기능은 아직 구현되지 않았다.
+
+Docker Engine과 Docker Compose가 설치된 환경에서 다음 순서로 실행한다.
+
+```bash
+cp .env.example .env
+# .env에 DB_PASSWORD, DB_ROOT_PASSWORD, REDIS_PASSWORD 입력
+docker compose up -d --build
+docker compose ps
+curl http://localhost:8080/actuator/health
+```
