@@ -1,3 +1,8 @@
 spring:
   application:
     name: usedTrade-app
+
+  data:
+    redis:
+      host: 10.0.2.15
+      port: 6379
