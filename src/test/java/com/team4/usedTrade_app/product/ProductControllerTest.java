@@ -7,13 +7,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team4.usedTrade_app.auth.TokenProvider;
 import com.team4.usedTrade_app.deal.DealRepository;
 import com.team4.usedTrade_app.user.User;
 import com.team4.usedTrade_app.user.UserRepository;
 import java.util.Base64;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -40,6 +41,9 @@ class ProductControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private TokenProvider tokenProvider;
+
     private User seller;
 
     @BeforeEach
@@ -47,7 +51,15 @@ class ProductControllerTest {
         dealRepository.deleteAll();
         productRepository.deleteAll();
         userRepository.deleteAll();
-        seller = userRepository.save(BeanUtils.instantiateClass(User.class));
+        seller = userRepository.save(User.builder()
+                .email(UUID.randomUUID() + "@example.test")
+                .password("test-password")
+                .nickname("seller")
+                .build());
+    }
+
+    private String bearer(User user) {
+        return "Bearer " + tokenProvider.issueAccessToken(user.getId());
     }
 
     @Test
@@ -58,7 +70,7 @@ class ProductControllerTest {
                         .param("content", "설명")
                         .param("category", "도서")
                         .param("price", "10000")
-                        .sessionAttr("userId", seller.getId()))
+                        .header("Authorization", bearer(seller)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.sellerId").value(seller.getId()))
                 .andExpect(jsonPath("$.status").value("SELLING"))
@@ -83,7 +95,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void registrationRequiresSessionAndImage() throws Exception {
+    void registrationRequiresAuthenticationAndImage() throws Exception {
         MockMultipartFile image = new MockMultipartFile("image", "book.png", "image/png", PNG_IMAGE);
         mockMvc.perform(multipart("/api/products")
                         .file(image)
@@ -98,7 +110,7 @@ class ProductControllerTest {
                         .param("content", "설명")
                         .param("category", "도서")
                         .param("price", "10000")
-                        .sessionAttr("userId", seller.getId()))
+                        .header("Authorization", bearer(seller)))
                 .andExpect(status().isBadRequest());
     }
 }

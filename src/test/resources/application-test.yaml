@@ -11,3 +11,5 @@ spring:
 
 app:
   upload-dir: ./build/test-uploads
+  jwt:
+    secret: test-only-jwt-signing-key-at-least-32-bytes

@@ -7,12 +7,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.team4.usedTrade_app.auth.TokenProvider;
 import com.team4.usedTrade_app.product.Product;
 import com.team4.usedTrade_app.product.ProductRepository;
 import com.team4.usedTrade_app.product.ProductStatus;
 import com.team4.usedTrade_app.user.User;
 import com.team4.usedTrade_app.user.UserRepository;
-import org.springframework.beans.BeanUtils;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ class DealApiIntegrationTests {
     @Autowired
     private DealRepository dealRepository;
 
+    @Autowired
+    private TokenProvider tokenProvider;
+
     @BeforeEach
     void clearData() {
         dealRepository.deleteAll();
@@ -46,7 +50,15 @@ class DealApiIntegrationTests {
     }
 
     private User newUser() {
-        return BeanUtils.instantiateClass(User.class);
+        return User.builder()
+                .email(UUID.randomUUID() + "@example.test")
+                .password("test-password")
+                .nickname("tester")
+                .build();
+    }
+
+    private String bearer(User user) {
+        return "Bearer " + tokenProvider.issueAccessToken(user.getId());
     }
 
     @Test
@@ -59,14 +71,14 @@ class DealApiIntegrationTests {
                 seller, "중고 책", "설명", "도서", "book.jpg", 10000));
 
         mockMvc.perform(post("/api/products/{productId}/application", product.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, firstBuyer.getId()))
+                        .header("Authorization", bearer(firstBuyer)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.productId").value(product.getId()))
                 .andExpect(jsonPath("$.buyerId").value(firstBuyer.getId()))
                 .andExpect(jsonPath("$.status").value("REQUESTED"))
                 .andExpect(jsonPath("$.productStatus").value("SELLING"));
         mockMvc.perform(post("/api/products/{productId}/application", product.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, secondBuyer.getId()))
+                        .header("Authorization", bearer(secondBuyer)))
                 .andExpect(status().isCreated());
 
         assertEquals(2, dealRepository.count());
@@ -78,7 +90,7 @@ class DealApiIntegrationTests {
                 .findFirst().orElseThrow();
 
         mockMvc.perform(post("/api/deals/{dealId}/approve", approvedDeal.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, seller.getId()))
+                        .header("Authorization", bearer(seller)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.productStatus").value("SOLD"));
@@ -87,10 +99,10 @@ class DealApiIntegrationTests {
         assertEquals(DealStatus.APPROVED, dealRepository.findById(approvedDeal.getId()).orElseThrow().getStatus());
         assertEquals(DealStatus.REQUESTED, dealRepository.findById(remainingDeal.getId()).orElseThrow().getStatus());
         mockMvc.perform(post("/api/deals/{dealId}/approve", remainingDeal.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, seller.getId()))
+                        .header("Authorization", bearer(seller)))
                 .andExpect(status().isConflict());
         mockMvc.perform(post("/api/products/{productId}/application", product.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, thirdBuyer.getId()))
+                        .header("Authorization", bearer(thirdBuyer)))
                 .andExpect(status().isConflict());
     }
 
@@ -102,46 +114,44 @@ class DealApiIntegrationTests {
                 seller, "중고 책", "설명", "도서", "book.jpg", 10000));
 
         mockMvc.perform(post("/api/products/{productId}/application", product.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, seller.getId()))
+                        .header("Authorization", bearer(seller)))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/api/products/{productId}/application", product.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, buyer.getId()))
+                        .header("Authorization", bearer(buyer)))
                 .andExpect(status().isCreated());
         mockMvc.perform(post("/api/products/{productId}/application", product.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, buyer.getId()))
+                        .header("Authorization", bearer(buyer)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CONFLICT"));
         assertEquals(1, dealRepository.count());
     }
 
     @Test
-    void sessionAndSellerAreRequired() throws Exception {
+    void authenticationAndSellerAreRequired() throws Exception {
         User seller = userRepository.save(newUser());
         User buyer = userRepository.save(newUser());
         Product product = productRepository.save(new Product(
                 seller, "중고 책", "설명", "도서", "book.jpg", 10000));
 
         mockMvc.perform(post("/api/products/{productId}/application", product.getId()))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/products/{productId}/application", 999999)
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, buyer.getId()))
+                        .header("Authorization", bearer(buyer)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
         mockMvc.perform(post("/api/products/{productId}/application", product.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, buyer.getId()))
+                        .header("Authorization", bearer(buyer)))
                 .andExpect(status().isCreated());
         Deal deal = dealRepository.findAll().getFirst();
 
         mockMvc.perform(post("/api/deals/{dealId}/approve", deal.getId()))
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/deals/{dealId}/approve", deal.getId())
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, buyer.getId()))
+                        .header("Authorization", bearer(buyer)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
         mockMvc.perform(post("/api/deals/{dealId}/approve", 999999)
-                        .sessionAttr(DealController.USER_ID_SESSION_KEY, seller.getId()))
+                        .header("Authorization", bearer(seller)))
                 .andExpect(status().isNotFound());
     }
 

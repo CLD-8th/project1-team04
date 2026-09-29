@@ -5,25 +5,24 @@ import com.team4.usedTrade_app.deal.dto.DealResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class DealController {
-    public static final String USER_ID_SESSION_KEY = "userId";
-
     private final DealService dealService;
 
     @PostMapping("/products/{productId}/application")
     public ResponseEntity<DealResponse> apply(@PathVariable Integer productId,
-            @SessionAttribute(name = USER_ID_SESSION_KEY, required = false) Integer userId) {
+            @AuthenticationPrincipal Integer userId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(dealService.apply(productId, requireUserId(userId)));
     }
 
     @PostMapping("/deals/{dealId}/approve")
     public DealResponse approve(@PathVariable Integer dealId,
-            @SessionAttribute(name = USER_ID_SESSION_KEY, required = false) Integer userId) {
+            @AuthenticationPrincipal Integer userId) {
         return dealService.approve(dealId, requireUserId(userId));
     }
 
