@@ -1,11 +1,16 @@
 package com.team4.usedTrade_app.product;
 
+import org.springframework.beans.factory.annotation.Value;
 import com.team4.usedTrade_app.product.dto.ProductDetailResponse;
+import com.team4.usedTrade_app.product.dto.ProductRegisterRequest;
+import com.team4.usedTrade_app.product.dto.ProductResponse;
+import com.team4.usedTrade_app.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.util.List;
 import java.util.Objects;
@@ -14,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -22,14 +27,22 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final RecentProductService recentProductService;
+
+    @Value("${app.upload-dir}")
+    private String uploadDir;
 
     // FR-05 게시글 상세 조회
     @Transactional(readOnly = true)
     public ProductDetailResponse getDetail(Integer productId, Integer userId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품을 찾을 수 없습니다."
+                ));
 
         recentProductService.addRecentProduct(userId, productId);
+
         return ProductDetailResponse.from(product);
     }
     // FR-07 최근 본 상품 조회

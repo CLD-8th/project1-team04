@@ -1,11 +1,18 @@
 package com.team4.usedTrade_app.product;
+import com.team4.usedTrade_app.auth.LoginUser;
+import com.team4.usedTrade_app.product.dto.ProductRegisterRequest;
+import com.team4.usedTrade_app.product.dto.ProductResponse;
+import com.team4.usedTrade_app.user.User;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.team4.usedTrade_app.product.dto.ProductDetailResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -19,7 +26,6 @@ public class ProductController {
     public ProductDetailResponse detail(
             @PathVariable Integer productId,
             @AuthenticationPrincipal Integer userId) {
-        // TODO: 로그인 사용자면 최근 본 상품 기록
         return productService.getDetail(productId, userId);
     }
 

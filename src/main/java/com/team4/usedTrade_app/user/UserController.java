@@ -39,4 +39,7 @@ public class UserController {
                 request.password()
         );
     }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() { return ResponseEntity.noContent().build(); } }
+
 }
