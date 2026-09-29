@@ -57,7 +57,7 @@
 | 프레임워크 버전 | Spring Boot 4.1.1 |
 | 그룹 | `com.team4` |
 | 이름 | `usedTrade-app` |
-| 패키지 | `com.team4.usedtradeapp` |
+| 패키지 | `com.team4.usedTrade_app` |
 | 포장 | Jar |
 | 개발 도구 버전 | 21 |
 | 최초 선택 의존성 | Spring Web |
