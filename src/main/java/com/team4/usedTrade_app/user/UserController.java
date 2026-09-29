@@ -40,6 +40,6 @@ public class UserController {
         );
     }
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() { return ResponseEntity.noContent().build(); } }
+    public ResponseEntity<Void> logout() { return ResponseEntity.noContent().build(); }
 
 }
