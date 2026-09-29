@@ -1,5 +1,30 @@
 # 도메인·기능 정의서 — 중고거래 게시판
 
+## 빠른 시작 (Docker Compose)
+
+Docker Engine과 Compose가 필요하다. 이 프로젝트는 앱 이미지를 `linux/amd64`와 `linux/arm64`로 함께 빌드하므로 Docker의 containerd 이미지 저장소가 활성화되어 있어야 한다. `docker info --format '{{json .DriverStatus}}'`에서 `io.containerd.snapshotter.v1`을 확인할 수 있다.
+
+```bash
+git clone https://github.com/CLD-8th/project1-team04.git
+cd project1-team04
+cp .env.example .env
+# .env의 DB_PASSWORD, DB_ROOT_PASSWORD, REDIS_PASSWORD, JWT_SECRET 입력
+# JWT_SECRET은 UTF-8 기준 32바이트 이상으로 설정
+docker compose config -q
+docker compose up -d --build --wait
+docker compose ps
+```
+
+`--build`는 Dockerfile에서 JAR과 앱 이미지를 빌드한다. `--wait`는 DB·Redis와 앱이 실행 또는 정상 상태가 될 때까지 기다린다. 기본 앱 포트는 `8080`이며 `.env`의 `APP_PORT`로 변경할 수 있다.
+
+| 확인 대상 | Docker 호스트에서 여는 URL |
+| --- | --- |
+| 중고거래 사이트 | http://localhost:8080/ |
+| API 테스트 페이지 | http://localhost:8080/api-test.html |
+| 상태 확인 | http://localhost:8080/actuator/health |
+
+다른 컴퓨터에서 접속할 때는 `localhost`를 Docker 호스트의 IP 주소로 바꾼다. 포트를 변경했다면 URL의 `8080`도 같은 값으로 바꾼다.
+
 ## 1. 서비스 개요
 
 - 한 줄 정의: 사용자가 중고 물품을 게시·조회하고, 구매할 수 있는 서비스
