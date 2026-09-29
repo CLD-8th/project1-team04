@@ -65,14 +65,30 @@
 
 ## 9. 현재 구현 및 실행
 
-현재 브랜치는 Spring Boot 앱과 MySQL·Redis의 실행 기반을 제공한다. 상품·거래 API와 최근 본 상품 기능은 아직 구현되지 않았다.
+Spring Boot 앱, 상품·거래 API, MySQL·Redis 실행 기반이 있다. 최근 본 상품을 Redis에 기록하는 기능은 아직 구현되지 않았다.
 
-Docker Engine과 Docker Compose가 설치된 환경에서 다음 순서로 실행한다.
+앱 이미지는 `linux/amd64`와 `linux/arm64`를 함께 빌드한다. 로컬에 다중 플랫폼 이미지를 저장할 수 있도록 Docker의 containerd 이미지 저장소를 사용한다. `docker info --format '{{json .DriverStatus}}'`에서 `io.containerd.snapshotter.v1`을 확인할 수 있다. JAR 빌드 단계는 빌드 호스트의 아키텍처에서 실행하고, 실행용 JRE 이미지는 두 아키텍처로 만든다. `--builder default`는 빌드 결과를 로컬 이미지 저장소에 넣기 위해 사용한다.
+
+각 호스트에서 Docker Engine과 Compose를 준비하고, `.env`에 DB·Redis 비밀번호와 `JWT_SECRET`을 설정한 뒤 실행한다.
 
 ```bash
-cp .env.example .env
-# .env에 DB_PASSWORD, DB_ROOT_PASSWORD, REDIS_PASSWORD 입력
-docker compose up -d --build
+cp -n .env.example .env  # .env가 없을 때만 생성
+# .env에 DB_PASSWORD, DB_ROOT_PASSWORD, REDIS_PASSWORD, JWT_SECRET 입력
+docker compose config -q
+./gradlew clean test bootJar --no-daemon
+docker compose build --builder default app
+docker image ls --tree project1-team04-app:multiarch
+docker compose pull db cache
+docker compose up -d --no-build --pull never --wait
 docker compose ps
-curl http://localhost:8080/actuator/health
+curl -fsS http://localhost:8080/actuator/health
+```
+
+기본 앱 이미지 태그는 `project1-team04-app:multiarch`이며 `APP_IMAGE` 환경변수로 바꿀 수 있다. 두 호스트에서 **동일하게 빌드된 이미지**를 사용하려면 한 호스트에서 `docker compose build --builder default app`을 실행하고, 다음과 같이 두 플랫폼이 포함된 이미지를 다른 호스트로 옮긴다. 각 호스트의 `.env`는 별도로 유지한다.
+
+```bash
+docker image save project1-team04-app:multiarch | gzip > usedtrade-multiarch.tar.gz
+# 다른 호스트로 usedtrade-multiarch.tar.gz를 전송한 뒤
+gunzip -c usedtrade-multiarch.tar.gz | docker image load
+docker compose up -d --no-build --pull never --wait
 ```
