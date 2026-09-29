@@ -25,6 +25,10 @@ server:
 
 app:
   upload-dir: ./uploads
+  jwt:
+    secret: ${JWT_SECRET}
+    access-expire-minutes: 30
+    refresh-expire-days: 7
 
 management:
   endpoints:
