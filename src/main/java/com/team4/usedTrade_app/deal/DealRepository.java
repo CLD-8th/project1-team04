@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface DealRepository extends JpaRepository<Deal, Integer> {
 
+    boolean existsByProduct_IdAndBuyer_Id(Integer productId, Integer buyerId);
+
     // FR-06 신청 목록 조회
     List<Deal> findByProductId(Integer productId);
 }

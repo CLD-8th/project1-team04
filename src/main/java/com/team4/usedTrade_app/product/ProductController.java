@@ -1,11 +1,14 @@
 package com.team4.usedTrade_app.product;
 
-import com.team4.usedTrade_app.product.dto.ProductDetailResponse;
+import com.team4.usedTrade_app.auth.LoginUser;
+import com.team4.usedTrade_app.product.dto.*;
+import com.team4.usedTrade_app.user.User;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/products")
@@ -14,10 +17,20 @@ public class ProductController {
 
     private final ProductService productService;
 
-    // FR-05 게시글 상세 조회
     @GetMapping("/{productId}")
-    public ProductDetailResponse detail(@PathVariable Integer productId) {
-        // TODO: 로그인 사용자면 최근 본 상품 기록 (FR-07 방지은님 연동)
+    public ProductDetailResponse getDetail(@PathVariable Integer productId) {
+        // TODO: 로그인 사용자의 최근 본 상품 기록 연동
         return productService.getDetail(productId);
+    }
+
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<ProductResponse> registerProduct(
+            @LoginUser User seller, @Valid @ModelAttribute ProductRegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.registerProduct(seller, request));
+    }
+
+    @GetMapping
+    public List<ProductResponse> getProducts() {
+        return productService.getProducts();
     }
 }

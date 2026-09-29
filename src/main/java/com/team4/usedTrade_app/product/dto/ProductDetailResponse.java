@@ -17,17 +17,17 @@ public record ProductDetailResponse(
         LocalDateTime createdAt
 ) {
 
-    public static ProductDetailResponse from(Product p) {
+    public static ProductDetailResponse from(Product product) {
         return new ProductDetailResponse(
-                p.getId(),
-                p.getTitle(),
-                p.getContent(),
-                p.getCategory(),
-                p.getImagePath(),
-                p.getPrice(),
-                p.getStatus(),
-                p.getSeller().getId(),
-                p.getCreatedAt()
+                product.getId(),
+                product.getTitle(),
+                product.getContent(),
+                product.getCategory(),
+                product.getImagePath(),
+                product.getPrice(),
+                product.getStatus(),
+                product.getSeller().getId(),
+                product.getCreatedAt()
         );
     }
 }

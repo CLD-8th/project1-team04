@@ -1,31 +1,66 @@
 package com.team4.usedTrade_app.deal;
 
+import com.team4.usedTrade_app.common.*;
 import com.team4.usedTrade_app.deal.dto.DealResponse;
-import com.team4.usedTrade_app.product.Product;
-import com.team4.usedTrade_app.product.ProductRepository;
+import com.team4.usedTrade_app.product.*;
+import com.team4.usedTrade_app.user.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class DealService {
-
     private final DealRepository dealRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
+    @Transactional
+    public DealResponse apply(Integer productId, Integer buyerId) {
+        Product product = productRepository.findByIdForUpdate(productId)
+                .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다."));
+        if (product.getStatus() != ProductStatus.SELLING) {
+            throw new ConflictException("판매 중인 상품만 신청할 수 있습니다.");
+        }
+        if (product.getSeller().getId().equals(buyerId)) {
+            throw new ForbiddenException("본인 상품에는 신청할 수 없습니다.");
+        }
+        User buyer = userRepository.findById(buyerId)
+                .orElseThrow(() -> new UnauthorizedException("로그인 사용자를 찾을 수 없습니다."));
+        if (dealRepository.existsByProduct_IdAndBuyer_Id(productId, buyerId)) {
+            throw new ConflictException("이미 신청한 상품입니다.");
+        }
+
+        Deal deal = dealRepository.saveAndFlush(new Deal(product, buyer));
+        return DealResponse.from(deal);
+    }
+
+    @Transactional
+    public DealResponse approve(Integer dealId, Integer sellerId) {
+        Deal deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new NotFoundException("거래 신청을 찾을 수 없습니다."));
+        Product product = productRepository.findByIdForUpdate(deal.getProduct().getId())
+                .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다."));
+        if (!product.getSeller().getId().equals(sellerId)) {
+            throw new ForbiddenException("판매자만 거래 신청을 수락할 수 있습니다.");
+        }
+        if (product.getStatus() != ProductStatus.SELLING || deal.getStatus() != DealStatus.REQUESTED) {
+            throw new ConflictException("이미 종료된 거래 신청입니다.");
+        }
+
+        deal.approve();
+        product.markSold();
+        return DealResponse.from(deal);
+    }
+  
     // FR-06 신청 목록 조회 (판매자만)
     @Transactional(readOnly = true)
     public List<DealResponse> getDeals(Integer productId, Integer loginUserId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다."));
         if (!product.getSeller().getId().equals(loginUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "판매자만 신청 목록을 조회할 수 있습니다.");
+            throw new ForbiddenException("판매자만 신청 목록을 조회할 수 있습니다.");
         }
 
         return dealRepository.findByProductId(productId).stream()
