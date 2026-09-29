@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>중고거래 앱 - 상품 목록</title>
+</head>
+<body>
+    <h1>중고거래 앱</h1>
+    <a href="register.html">새 상품 등록</a>
+    <hr>
+    <h2>상품 목록</h2>
+    <ul id="product-list">
+        <!-- JS를 통해 상품 목록이 여기에 렌더링됩니다 -->
+    </ul>
+
+    <script>
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) {
+                    throw new Error('상품을 불러오는데 실패했습니다.');
+                }
+                const products = await response.json();
+                const listElement = document.getElementById('product-list');
+                listElement.innerHTML = ''; // 로딩 텍스트 지우기
+                
+                products.forEach(product => {
+                    const li = document.createElement('li');
+                    
+                    let imageHtml = '';
+                    if (product.imagePath) {
+                        imageHtml = `<br><img src="${product.imagePath}" alt="${product.title}" style="max-width: 200px; max-height: 200px;">`;
+                    }
+
+                    li.innerHTML = `
+                        <a href="detail.html?id=${product.id}"><strong>${product.title}</strong></a> - ${product.price} 원
+                        <br>
+                        카테고리: ${product.category} | 상태: ${product.status} | 판매자 ID: ${product.sellerId}
+                        <br>
+                        <p>${product.content}</p>
+                        ${imageHtml}
+                    `;
+                    listElement.appendChild(li);
+                });
+            } catch (error) {
+                document.getElementById('product-list').innerHTML = `<li>목록을 불러오는 중 오류가 발생했습니다: ${error.message}</li>`;
+            }
+        }
+
+        // 페이지 로드 시 상품 목록 불러오기
+        window.onload = loadProducts;
+    </script>
+</body>
+</html>

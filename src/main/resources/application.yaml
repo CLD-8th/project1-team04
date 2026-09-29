@@ -1,8 +1,19 @@
 spring:
   application:
     name: usedTrade-app
+  datasource:
+    url: jdbc:mysql://localhost:3306/used_trade?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: used_trade
+    password: used_trade_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   servlet:
     multipart:
       max-file-size: 5MB
