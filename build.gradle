@@ -40,7 +40,7 @@ dependencies {
 	// 입력값 검증
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-	// 비밀번호 암호화
+	// 비밀번호 암호화 / Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
 	// Lombok
@@ -50,11 +50,18 @@ dependencies {
 	// MySQL
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
+	// H2
+	testRuntimeOnly 'com.h2database:h2'
+
 	// 테스트
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	// JWT part
+	// Jackson
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+	// JWT
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'

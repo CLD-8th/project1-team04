@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:used_trade_test_db;DB_CLOSE_DELAY=-1;MODE=MySQL;NON_KEYWORDS=USER
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  upload-dir: ./uploads-test
