@@ -1,5 +1,6 @@
 package com.team4.usedTrade_app.product;
 
+import com.team4.usedTrade_app.common.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import com.team4.usedTrade_app.product.dto.ProductDetailResponse;
 import com.team4.usedTrade_app.product.dto.ProductRegisterRequest;
