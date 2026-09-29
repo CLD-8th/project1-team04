@@ -7,6 +7,7 @@ import com.team4.usedTrade_app.user.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,5 +52,19 @@ public class DealService {
         deal.approve();
         product.markSold();
         return DealResponse.from(deal);
+    }
+  
+    // FR-06 신청 목록 조회 (판매자만)
+    @Transactional(readOnly = true)
+    public List<DealResponse> getDeals(Integer productId, Integer loginUserId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다."));
+        if (!product.getSeller().getId().equals(loginUserId)) {
+            throw new ForbiddenException("판매자만 신청 목록을 조회할 수 있습니다.");
+        }
+
+        return dealRepository.findByProductId(productId).stream()
+                .map(DealResponse::from)
+                .toList();
     }
 }
