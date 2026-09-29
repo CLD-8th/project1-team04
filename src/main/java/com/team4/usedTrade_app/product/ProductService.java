@@ -25,9 +25,11 @@ public class ProductService {
 
     // FR-05 게시글 상세 조회
     @Transactional(readOnly = true)
-    public ProductDetailResponse getDetail(Integer productId) {
+    public ProductDetailResponse getDetail(Integer productId, Integer userId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."));
+
+        recentProductService.addRecentProduct(userId, productId);
         return ProductDetailResponse.from(product);
     }
     // FR-07 최근 본 상품 조회

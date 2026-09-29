@@ -1,5 +1,5 @@
 package com.team4.usedTrade_app.product;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.team4.usedTrade_app.product.dto.ProductDetailResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,15 +16,18 @@ public class ProductController {
 
     // FR-05 게시글 상세 조회
     @GetMapping("/{productId}")
-    public ProductDetailResponse detail(@PathVariable Integer productId) {
-        // TODO: 로그인 사용자면 최근 본 상품 기록 (FR-07 방지은님 연동)
-        return productService.getDetail(productId);
+    public ProductDetailResponse detail(
+            @PathVariable Integer productId,
+            @AuthenticationPrincipal Integer userId) {
+        // TODO: 로그인 사용자면 최근 본 상품 기록
+        return productService.getDetail(productId, userId);
     }
 
     // FR-07 최근 본 상품 조회
     @GetMapping("/recent")
-    public List<ProductDetailResponse> recentProducts() {
-        return productService.getRecentProducts(1);
+    public List<ProductDetailResponse> recentProducts(
+            @AuthenticationPrincipal Integer userId) {
+        return productService.getRecentProducts(userId);
     }
 
     // FR-01 게시글 등록
