@@ -14,8 +14,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Field;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,11 +38,6 @@ class ProductControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(productController)
                 .setCustomArgumentResolvers(new com.team4.usedTrade_app.auth.LoginUserArgumentResolver(userRepository))
                 .build();
-        // Initialize mock user, since data.sql might not run before tests in the same way or might be rolled back
-        if (userRepository.count() == 0) {
-            User user = User.builder().build();
-            userRepository.save(user);
-        }
     }
 
     @Test
@@ -57,19 +50,40 @@ class ProductControllerTest {
                 .param("price", "10000")
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.sellerId").exists())
                 .andExpect(jsonPath("$.title").value("Test Title"))
-                .andExpect(jsonPath("$.status").value("SELLING"));
+                .andExpect(jsonPath("$.content").value("Test Content"))
+                .andExpect(jsonPath("$.category").value("Electronics"))
+                .andExpect(jsonPath("$.price").value(10000))
+                .andExpect(jsonPath("$.imagePath").exists())
+                .andExpect(jsonPath("$.status").value("SELLING"))
+                .andExpect(jsonPath("$.createdAt").exists());
     }
 
     @Test
     void getProducts() throws Exception {
+        // Create a product first to ensure the list is not empty
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/products")
+                .file("image", "dummy image content".getBytes())
+                .param("title", "Test Title")
+                .param("content", "Test Content")
+                .param("category", "Electronics")
+                .param("price", "10000")
+                .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isCreated());
+
         mockMvc.perform(get("/api/products"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id").exists())
+                .andExpect(jsonPath("$[0].sellerId").exists())
+                .andExpect(jsonPath("$[0].title").exists())
+                .andExpect(jsonPath("$[0].content").exists())
+                .andExpect(jsonPath("$[0].category").exists())
+                .andExpect(jsonPath("$[0].price").exists())
+                .andExpect(jsonPath("$[0].status").exists())
+                .andExpect(jsonPath("$[0].createdAt").exists());
     }
 
-    private void setField(Object object, String fieldName, Object value) throws Exception {
-        Field field = object.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(object, value);
-    }
 }
