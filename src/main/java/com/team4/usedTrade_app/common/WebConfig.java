@@ -1,16 +1,21 @@
 package com.team4.usedTrade_app.common;
 
 import com.team4.usedTrade_app.auth.LoginUserArgumentResolver;
+import java.nio.file.Path;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.util.List;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     private final LoginUserArgumentResolver loginUserArgumentResolver;
+
+    @Value("${app.upload-dir}")
+    private String uploadDir;
 
     public WebConfig(LoginUserArgumentResolver loginUserArgumentResolver) {
         this.loginUserArgumentResolver = loginUserArgumentResolver;
@@ -22,8 +27,9 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addResourceHandlers(org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String location = Path.of(uploadDir).toAbsolutePath().normalize().toUri().toString();
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+                .addResourceLocations(location.endsWith("/") ? location : location + "/");
     }
 }

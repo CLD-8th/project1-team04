@@ -23,10 +23,10 @@
                 const products = await response.json();
                 const listElement = document.getElementById('product-list');
                 listElement.innerHTML = ''; // 로딩 텍스트 지우기
-                
+
                 products.forEach(product => {
                     const li = document.createElement('li');
-                    
+
                     let imageHtml = '';
                     if (product.imagePath) {
                         imageHtml = `<br><img src="${product.imagePath}" alt="${product.title}" style="max-width: 200px; max-height: 200px;">`;

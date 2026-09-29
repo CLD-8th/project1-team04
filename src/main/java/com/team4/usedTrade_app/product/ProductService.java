@@ -5,6 +5,10 @@ import com.team4.usedTrade_app.product.dto.ProductDetailResponse;
 import com.team4.usedTrade_app.product.dto.ProductRegisterRequest;
 import com.team4.usedTrade_app.product.dto.ProductResponse;
 import com.team4.usedTrade_app.user.User;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +40,6 @@ public class ProductService {
     @Value("${app.upload-dir}")
     private String uploadDir;
 
-    // FR-05 게시글 상세 조회
     @Transactional(readOnly = true)
     public ProductDetailResponse getDetail(Integer productId, Integer userId) {
         Product product = productRepository.findById(productId)
@@ -65,39 +72,38 @@ public class ProductService {
 
     @Transactional
     public ProductResponse registerProduct(User seller, ProductRegisterRequest request) {
-        String imagePath = null;
-        if (request.getImage() != null && !request.getImage().isEmpty()) {
-            try {
-                String filename = System.currentTimeMillis() + "_" + request.getImage().getOriginalFilename();
-                Path uploadPath = Paths.get(uploadDir);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-                Path filePath = uploadPath.resolve(filename).toAbsolutePath();
-                request.getImage().transferTo(filePath.toFile());
-                imagePath = "/uploads/" + filename;
-            } catch (IOException e) {
-                throw new RuntimeException("이미지 파일 저장에 실패했습니다.", e);
-            }
+        MultipartFile image = request.getImage();
+        if (image == null || image.isEmpty()) {
+            throw new BadRequestException("상품 사진은 필수입니다.");
         }
 
-        Product product = Product.builder()
-                .seller(seller)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .category(request.getCategory())
-                .price(request.getPrice())
-                .imagePath(imagePath)
-                .build();
+        String extension;
+        if ("image/png".equals(image.getContentType())) {
+            extension = ".png";
+        } else if ("image/jpeg".equals(image.getContentType())) {
+            extension = ".jpg";
+        } else {
+            throw new BadRequestException("PNG 또는 JPEG 사진만 등록할 수 있습니다.");
+        }
 
-        Product savedProduct = productRepository.save(product);
-        return ProductResponse.from(savedProduct);
+        String filename = UUID.randomUUID() + extension;
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(uploadPath);
+            image.transferTo(uploadPath.resolve(filename).toFile());
+        } catch (IOException exception) {
+            throw new IllegalStateException("상품 사진을 저장할 수 없습니다.", exception);
+        }
+
+        Product product = new Product(seller, request.getTitle(), request.getContent(),
+                request.getCategory(), "/uploads/" + filename, request.getPrice());
+        return ProductResponse.from(productRepository.save(product));
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getProducts() {
         return productRepository.findAll().stream()
                 .map(ProductResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
