@@ -2,12 +2,9 @@ package com.team4.usedTrade_app.product;
 
 import com.team4.usedTrade_app.user.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
+import java.util.Objects;
+import lombok.*;
 
 @Entity
 @Table(name = "product")
@@ -19,37 +16,38 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    @Column(length = 200)
+    @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(length = 100)
+    @Column(nullable = false, length = 100)
     private String category;
 
-    @Column(length = 255)
+    @Column(nullable = false, length = 255)
     private String imagePath;
 
     private int price;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "CHAR(20)")
+    @Column(nullable = false, columnDefinition = "CHAR(20)")
     private ProductStatus status;
 
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Builder
     public Product(User seller, String title, String content, String category, String imagePath, int price) {
-        this.seller = seller;
-        this.title = title;
-        this.content = content;
-        this.category = category;
-        this.imagePath = imagePath;
+        this.seller = Objects.requireNonNull(seller, "seller");
+        this.title = Objects.requireNonNull(title, "title");
+        this.content = Objects.requireNonNull(content, "content");
+        this.category = Objects.requireNonNull(category, "category");
+        this.imagePath = Objects.requireNonNull(imagePath, "imagePath");
         this.price = price;
         this.status = ProductStatus.SELLING;
     }

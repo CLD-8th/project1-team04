@@ -1,6 +1,7 @@
 package com.team4.usedTrade_app.config;
 
 import com.team4.usedTrade_app.auth.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,9 +51,22 @@ public class SecurityConfig {
                                 "/api/products/*"
                         ).permitAll()
 
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/",
+                                "/index.html",
+                                "/register.html",
+                                "/uploads/**",
+                                "/actuator/health"
+                        ).permitAll()
+
                         // 그 외 API는 로그인 필요
                         .anyRequest().authenticated()
                 )
+
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
+                        (request, response, exception) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                ))
 
                 .addFilterBefore(
                         jwtAuthenticationFilter,

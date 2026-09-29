@@ -25,5 +25,6 @@ public class ProductRegisterRequest {
     @PositiveOrZero(message = "가격은 0 이상이어야 합니다.")
     private Integer price;
 
-    private MultipartFile image; // Optional for now
+    @NotNull(message = "상품 사진은 필수입니다.")
+    private MultipartFile image;
 }

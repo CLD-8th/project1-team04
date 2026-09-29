@@ -1,89 +1,116 @@
 package com.team4.usedTrade_app.product;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team4.usedTrade_app.product.dto.ProductRegisterRequest;
-import com.team4.usedTrade_app.user.User;
-import com.team4.usedTrade_app.user.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.http.MediaType;
-import org.springframework.transaction.annotation.Transactional;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@Transactional
-class ProductControllerTest {
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team4.usedTrade_app.auth.TokenProvider;
+import com.team4.usedTrade_app.deal.DealRepository;
+import com.team4.usedTrade_app.user.User;
+import com.team4.usedTrade_app.user.UserRepository;
+import java.util.Base64;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class ProductControllerTest {
+    private static final byte[] PNG_IMAGE = Base64.getDecoder().decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/D8sAAAAASUVORK5CYII=");
+
+    @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private ProductController productController;
+    private DealRepository dealRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @Autowired
     private UserRepository userRepository;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private TokenProvider tokenProvider;
+
+    private User seller;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(productController)
-                .setCustomArgumentResolvers(new com.team4.usedTrade_app.auth.LoginUserArgumentResolver(userRepository))
-                .build();
+        dealRepository.deleteAll();
+        productRepository.deleteAll();
+        userRepository.deleteAll();
+        seller = userRepository.save(User.builder()
+                .email(UUID.randomUUID() + "@example.test")
+                .password("test-password")
+                .nickname("seller")
+                .build());
+    }
+
+    private String bearer(User user) {
+        return "Bearer " + tokenProvider.issueAccessToken(user.getId());
     }
 
     @Test
-    void registerProduct() throws Exception {
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/products")
-                .file("image", "dummy image content".getBytes())
-                .param("title", "Test Title")
-                .param("content", "Test Content")
-                .param("category", "Electronics")
-                .param("price", "10000")
-                .contentType(MediaType.MULTIPART_FORM_DATA))
+    void registerProductAndServeImage() throws Exception {
+        String response = mockMvc.perform(multipart("/api/products")
+                        .file(new MockMultipartFile("image", "book.png", "image/png", PNG_IMAGE))
+                        .param("title", "중고 책")
+                        .param("content", "설명")
+                        .param("category", "도서")
+                        .param("price", "10000")
+                        .header("Authorization", bearer(seller)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.sellerId").exists())
-                .andExpect(jsonPath("$.title").value("Test Title"))
-                .andExpect(jsonPath("$.content").value("Test Content"))
-                .andExpect(jsonPath("$.category").value("Electronics"))
-                .andExpect(jsonPath("$.price").value(10000))
-                .andExpect(jsonPath("$.imagePath").exists())
+                .andExpect(jsonPath("$.sellerId").value(seller.getId()))
                 .andExpect(jsonPath("$.status").value("SELLING"))
-                .andExpect(jsonPath("$.createdAt").exists());
+                .andReturn().getResponse().getContentAsString();
+
+        String imagePath = new ObjectMapper().readTree(response).get("imagePath").asText();
+        mockMvc.perform(get(imagePath))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(PNG_IMAGE));
     }
 
     @Test
     void getProducts() throws Exception {
-        // Create a product first to ensure the list is not empty
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/products")
-                .file("image", "dummy image content".getBytes())
-                .param("title", "Test Title")
-                .param("content", "Test Content")
-                .param("category", "Electronics")
-                .param("price", "10000")
-                .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isCreated());
+        Product product = productRepository.save(new Product(
+                seller, "중고 책", "설명", "도서", "/uploads/book.png", 10000));
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].id").exists())
-                .andExpect(jsonPath("$[0].sellerId").exists())
-                .andExpect(jsonPath("$[0].title").exists())
-                .andExpect(jsonPath("$[0].content").exists())
-                .andExpect(jsonPath("$[0].category").exists())
-                .andExpect(jsonPath("$[0].price").exists())
-                .andExpect(jsonPath("$[0].status").exists())
-                .andExpect(jsonPath("$[0].createdAt").exists());
+                .andExpect(jsonPath("$[0].id").value(product.getId()))
+                .andExpect(jsonPath("$[0].sellerId").value(seller.getId()))
+                .andExpect(jsonPath("$[0].status").value("SELLING"));
     }
 
+    @Test
+    void registrationRequiresAuthenticationAndImage() throws Exception {
+        MockMultipartFile image = new MockMultipartFile("image", "book.png", "image/png", PNG_IMAGE);
+        mockMvc.perform(multipart("/api/products")
+                        .file(image)
+                        .param("title", "중고 책")
+                        .param("content", "설명")
+                        .param("category", "도서")
+                        .param("price", "10000"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(multipart("/api/products")
+                        .param("title", "중고 책")
+                        .param("content", "설명")
+                        .param("category", "도서")
+                        .param("price", "10000")
+                        .header("Authorization", bearer(seller)))
+                .andExpect(status().isBadRequest());
+    }
 }

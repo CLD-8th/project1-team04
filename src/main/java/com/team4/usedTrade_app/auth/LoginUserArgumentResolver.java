@@ -1,8 +1,11 @@
 package com.team4.usedTrade_app.auth;
 
+import com.team4.usedTrade_app.common.UnauthorizedException;
 import com.team4.usedTrade_app.user.User;
 import com.team4.usedTrade_app.user.UserRepository;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -24,8 +27,13 @@ public class LoginUserArgumentResolver implements HandlerMethodArgumentResolver 
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-        // Return Mock User (ID: 1)
-        return userRepository.findById(1).orElseThrow(() -> new IllegalArgumentException("Mock user not found."));
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Integer id)) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UnauthorizedException("로그인 사용자를 찾을 수 없습니다."));
     }
 }
