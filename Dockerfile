@@ -1,5 +1,6 @@
-# 1단계: 빌드
-FROM eclipse-temurin:21-jdk AS build
+# syntax=docker/dockerfile:1
+# JAR은 빌드 호스트의 아키텍처에서 생성한다.
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
