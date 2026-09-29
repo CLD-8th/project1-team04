@@ -22,6 +22,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String PREFIX = "Bearer ";
 
     private final TokenProvider tokenProvider;
+    private final TokenRevocationService tokenRevocationService;
 
     @Override
     protected void doFilterInternal(
@@ -34,7 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null
                 && tokenProvider.isValid(token)
-                && tokenProvider.isAccessToken(token)) {
+                && tokenProvider.isAccessToken(token)
+                && !tokenRevocationService.isRevoked(token)) {
 
             Integer userId = tokenProvider.getUserId(token);
 

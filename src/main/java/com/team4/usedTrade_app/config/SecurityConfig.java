@@ -44,6 +44,8 @@ public class SecurityConfig {
                                 "/api/users/login"
                         ).permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/api/products/recent").authenticated()
+
                         // 상품 조회
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -55,8 +57,10 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/",
                                 "/index.html",
-                                "/register.html",
+                                "/api-test.html",
+                                "/assets/**",
                                 "/uploads/**",
+                                "/error",
                                 "/actuator/health"
                         ).permitAll()
 

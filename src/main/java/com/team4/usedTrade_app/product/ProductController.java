@@ -1,6 +1,7 @@
 package com.team4.usedTrade_app.product;
 
 import com.team4.usedTrade_app.auth.LoginUser;
+import com.team4.usedTrade_app.common.UnauthorizedException;
 import com.team4.usedTrade_app.product.dto.*;
 import com.team4.usedTrade_app.user.User;
 import jakarta.validation.Valid;
@@ -29,6 +30,9 @@ public class ProductController {
     @GetMapping("/recent")
     public List<ProductDetailResponse> recentProducts(
             @AuthenticationPrincipal Integer userId) {
+        if (userId == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
         return productService.getRecentProducts(userId);
     }
 
@@ -39,7 +43,9 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponse> getProducts() {
-        return productService.getProducts();
+    public List<ProductResponse> getProducts(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) ProductStatus status) {
+        return productService.getProducts(category, status);
     }
 }

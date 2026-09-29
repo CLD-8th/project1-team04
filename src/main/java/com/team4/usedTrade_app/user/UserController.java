@@ -7,6 +7,7 @@ import com.team4.usedTrade_app.user.dto.UserRequest;
 import com.team4.usedTrade_app.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +41,9 @@ public class UserController {
         );
     }
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() { return ResponseEntity.noContent().build(); }
+    public ResponseEntity<Void> logout(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
+        authService.logout(authorization.substring("Bearer ".length()));
+        return ResponseEntity.noContent().build();
+    }
 
 }

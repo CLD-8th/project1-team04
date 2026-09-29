@@ -1,6 +1,7 @@
 package com.team4.usedTrade_app.auth;
 
 import com.team4.usedTrade_app.auth.dto.TokenResponse;
+import com.team4.usedTrade_app.common.UnauthorizedException;
 import com.team4.usedTrade_app.user.User;
 import com.team4.usedTrade_app.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,15 +16,16 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
+    private final TokenRevocationService tokenRevocationService;
 
     public TokenResponse login(String email, String password) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+                        new UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         return new TokenResponse(
@@ -32,5 +34,9 @@ public class AuthService {
                 user.getId(),
                 user.getNickname()
         );
+    }
+
+    public void logout(String accessToken) {
+        tokenRevocationService.revoke(accessToken);
     }
 }

@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.team4.usedTrade_app.auth.TokenProvider;
+import com.team4.usedTrade_app.auth.TokenRevocationService;
 import com.team4.usedTrade_app.product.Product;
 import com.team4.usedTrade_app.product.ProductRepository;
 import com.team4.usedTrade_app.product.ProductStatus;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -41,6 +43,9 @@ class DealApiIntegrationTests {
 
     @Autowired
     private TokenProvider tokenProvider;
+
+    @MockitoBean
+    private TokenRevocationService tokenRevocationService;
 
     @BeforeEach
     void clearData() {

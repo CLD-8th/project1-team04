@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>중고거래 API 테스트</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --ink: #172338;
+            --muted: #627087;
+            --line: #dce4ef;
+            --blue: #2858b8;
+            --blue-dark: #1c438f;
+            --green: #08795d;
+            --red: #b03a42;
+            --surface: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #f2f5fa;
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        button, input, select, textarea { font: inherit; }
+
+        button {
+            border: 0;
+            border-radius: 10px;
+            background: var(--blue);
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            padding: 10px 16px;
+            transition: background 120ms ease, transform 120ms ease;
+        }
+
+        button:hover { background: var(--blue-dark); }
+        button:active { transform: translateY(1px); }
+        button:disabled { cursor: wait; opacity: .6; }
+        :focus-visible { outline: 3px solid #83a8ff; outline-offset: 2px; }
+
+        .hero {
+            background: linear-gradient(120deg, #152a4c, #244b81);
+            color: #fff;
+            padding: 34px max(24px, calc((100vw - 1240px) / 2)) 38px;
+        }
+
+        .eyebrow {
+            color: #a9c7ff;
+            font-size: .76rem;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+        }
+
+        h1 { font-size: clamp(1.7rem, 3vw, 2.45rem); margin: 8px 0; }
+        .hero p { color: #d4e2f8; margin: 0; max-width: 720px; }
+        .hero-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+
+        .hero-pills span {
+            border: 1px solid #7294c4;
+            border-radius: 999px;
+            font-size: .8rem;
+            padding: 5px 11px;
+        }
+        .hero-nav { display: flex; gap: 10px; margin-top: 20px; }
+        .hero-nav a {
+            border: 1px solid #7294c4;
+            border-radius: 8px;
+            color: #fff;
+            font-size: .86rem;
+            font-weight: 700;
+            padding: 8px 12px;
+            text-decoration: none;
+        }
+        .hero-nav a:hover { background: rgba(255, 255, 255, .12); }
+
+        .shell { max-width: 1288px; margin: 0 auto; padding: 24px; }
+        .panel, .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(23, 45, 78, .05);
+        }
+
+        .session-panel {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) minmax(250px, 1fr);
+            gap: 20px;
+            align-items: center;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+
+        .session-panel h2 { font-size: 1rem; margin: 0 0 6px; }
+        .session-panel p { color: var(--muted); font-size: .87rem; margin: 0; }
+        .session-controls { display: grid; gap: 8px; }
+        .session-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .session-chip {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--muted);
+            font-size: .79rem;
+            padding: 5px 10px;
+        }
+        .session-chip.is-ready { background: #e8f7f1; border-color: #b9e6d2; color: #086b50; }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(310px, 370px);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .operations { min-width: 0; }
+        .group { margin-bottom: 28px; }
+        .group-title { margin-bottom: 13px; }
+        .group-title h2 { font-size: 1.16rem; margin: 0; }
+        .group-title p { color: var(--muted); font-size: .86rem; margin: 3px 0 0; }
+        .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+
+        .card { display: flex; flex-direction: column; min-width: 0; padding: 19px; }
+        .card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 10px; }
+        .fr-id { color: var(--muted); font-size: .73rem; font-weight: 800; letter-spacing: .05em; }
+        .method {
+            border-radius: 5px;
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .04em;
+            padding: 3px 6px;
+        }
+        .method.get { background: #e6f5ee; color: #08704d; }
+        .method.post { background: #e8efff; color: #2457b6; }
+        .pending { background: #fff2dc; border-radius: 999px; color: #855500; font-size: .7rem; font-weight: 700; padding: 3px 8px; }
+
+        .card h3 { font-size: 1rem; margin: 0 0 3px; }
+        .path {
+            color: #3d5579;
+            display: block;
+            font-size: .75rem;
+            margin-bottom: 9px;
+            overflow-wrap: anywhere;
+        }
+        .description { color: var(--muted); font-size: .82rem; margin: 0 0 15px; }
+        .card form { display: grid; gap: 11px; margin-top: auto; }
+        .field { display: grid; gap: 5px; }
+        .field label { color: #34445b; font-size: .79rem; font-weight: 700; }
+        .field input, .field select, .field textarea, .session-controls select {
+            background: #fff;
+            border: 1px solid #cbd6e5;
+            border-radius: 9px;
+            color: var(--ink);
+            min-width: 0;
+            padding: 9px 10px;
+            width: 100%;
+        }
+        .field textarea { min-height: 72px; resize: vertical; }
+        .field input[type="file"] { font-size: .75rem; padding: 8px; }
+        .field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .card form button { margin-top: 3px; width: 100%; }
+        .card-feedback {
+            border-top: 1px solid #edf1f6;
+            color: var(--muted);
+            font-size: .77rem;
+            margin: 14px 0 0;
+            padding-top: 10px;
+            overflow-wrap: anywhere;
+        }
+        .card-feedback.is-success { color: var(--green); }
+        .card-feedback.is-error { color: var(--red); }
+
+        .response-panel { position: sticky; top: 22px; padding: 20px; }
+        .response-panel h2 { font-size: 1rem; margin: 0 0 4px; }
+        .response-panel > p { color: var(--muted); font-size: .82rem; margin: 0 0 16px; }
+        .response-meta { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+        .response-meta span {
+            background: #eff3f9;
+            border-radius: 6px;
+            color: #334b6d;
+            font-size: .72rem;
+            font-weight: 700;
+            padding: 4px 7px;
+        }
+        .response-meta #result-status.is-success { background: #e5f6ed; color: var(--green); }
+        .response-meta #result-status.is-error { background: #ffeded; color: var(--red); }
+        #result-path { color: #3d5579; font-size: .79rem; margin: 10px 0 12px; overflow-wrap: anywhere; }
+        #result-body {
+            background: #142036;
+            border-radius: 10px;
+            color: #e8efff;
+            font-size: .76rem;
+            line-height: 1.55;
+            margin: 0;
+            max-height: min(62vh, 640px);
+            min-height: 130px;
+            overflow: auto;
+            padding: 15px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .response-footnote { color: var(--muted); font-size: .75rem; margin-top: 12px; }
+
+        @media (max-width: 1020px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .response-panel { grid-row: 1; position: static; }
+            .operations { grid-row: 2; }
+            #result-body { max-height: 300px; }
+        }
+        @media (max-width: 670px) {
+            .hero { padding: 28px 20px; }
+            .shell { padding: 16px; }
+            .session-panel, .card-grid { grid-template-columns: 1fr; }
+            .session-panel { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+<header class="hero">
+    <div class="eyebrow">Project 1 · API console</div>
+    <h1>중고거래 API 테스트</h1>
+    <p>계정을 만든 뒤 판매자와 구매자로 로그인하고, 상품 등록부터 거래 승인까지 한 화면에서 확인합니다.</p>
+    <div class="hero-pills">
+        <span>API 10개</span><span>상품·거래·계정</span><span>실제 서버 응답</span>
+    </div>
+    <nav class="hero-nav" aria-label="화면 이동">
+        <a href="/">중고거래 사이트</a>
+        <a href="/api-test.html" aria-current="page">API 테스트</a>
+    </nav>
+</header>
+
+<div class="shell">
+    <section class="panel session-panel" aria-label="로그인 세션">
+        <div>
+            <h2>요청에 사용할 계정</h2>
+            <p>판매자와 구매자 계정을 한 번씩 로그인하면 두 화면에서 공유합니다. 접근 토큰은 발급 후 최대 30분간 유효합니다.</p>
+        </div>
+        <div class="session-controls">
+            <label for="active-role">현재 요청 계정</label>
+            <select id="active-role">
+                <option value="seller">판매자</option>
+                <option value="buyer">구매자</option>
+            </select>
+            <div class="session-list">
+                <span id="seller-session" class="session-chip">판매자 · 로그인 전</span>
+                <span id="buyer-session" class="session-chip">구매자 · 로그인 전</span>
+            </div>
+        </div>
+    </section>
+
+    <main class="dashboard">
+        <div class="operations">
+            <section class="group" aria-labelledby="account-heading">
+                <div class="group-title">
+                    <h2 id="account-heading">1. 계정</h2>
+                    <p>회원가입 후 역할을 선택해 로그인하세요.</p>
+                </div>
+                <div class="card-grid">
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-10</span><span class="method post">POST</span></div>
+                        <h3>회원가입</h3><code class="path">/api/users</code>
+                        <p class="description">테스트에 사용할 판매자·구매자 계정을 만듭니다.</p>
+                        <form id="signup-form" data-action="signup">
+                            <div class="field"><label for="signup-email">이메일</label><input id="signup-email" name="email" type="email" autocomplete="email" required></div>
+                            <div class="field"><label for="signup-password">비밀번호 (8~64자)</label><input id="signup-password" name="password" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></div>
+                            <div class="field"><label for="signup-nickname">닉네임</label><input id="signup-nickname" name="nickname" type="text" maxlength="50" required></div>
+                            <button type="submit">회원가입 요청</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-08</span><span class="method post">POST</span></div>
+                        <h3>로그인</h3><code class="path">/api/users/login</code>
+                        <p class="description">로그인할 역할을 선택하면 해당 세션에 접근 토큰을 보관합니다.</p>
+                        <form id="login-form" data-action="login">
+                            <div class="field"><label for="login-role">역할</label><select id="login-role" name="role"><option value="seller">판매자</option><option value="buyer">구매자</option></select></div>
+                            <div class="field"><label for="login-email">이메일</label><input id="login-email" name="email" type="email" autocomplete="email" required></div>
+                            <div class="field"><label for="login-password">비밀번호</label><input id="login-password" name="password" type="password" autocomplete="current-password" required></div>
+                            <button type="submit">로그인 요청</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-09</span><span class="method post">POST</span></div>
+                        <h3>로그아웃</h3><code class="path">/api/users/logout</code>
+                        <p class="description">현재 계정의 접근 토큰을 서버에서 무효화하고 화면의 로그인 정보를 지웁니다.</p>
+                        <form data-action="logout">
+                            <button type="submit">로그아웃 요청</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="group" aria-labelledby="product-heading">
+                <div class="group-title">
+                    <h2 id="product-heading">2. 상품</h2>
+                    <p>등록 결과의 상품 ID가 아래 입력란에 자동으로 채워집니다.</p>
+                </div>
+                <div class="card-grid">
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-01</span><span class="method post">POST</span></div>
+                        <h3>상품 등록</h3><code class="path">/api/products</code>
+                        <p class="description">판매자 계정을 선택하고 PNG 또는 JPEG 사진을 첨부하세요.</p>
+                        <form id="product-form" data-action="create-product">
+                            <div class="field"><label for="product-title">제목</label><input id="product-title" name="title" type="text" maxlength="200" required></div>
+                            <div class="field"><label for="product-content">설명</label><textarea id="product-content" name="content" required></textarea></div>
+                            <div class="field-row">
+                                <div class="field"><label for="product-category">카테고리</label><input id="product-category" name="category" type="text" maxlength="100" required></div>
+                                <div class="field"><label for="product-price">가격 (원)</label><input id="product-price" name="price" type="number" min="0" step="1" required></div>
+                            </div>
+                            <div class="field"><label for="product-image">사진 1장</label><input id="product-image" name="image" type="file" accept="image/png,image/jpeg" required></div>
+                            <button type="submit">상품 등록 요청</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-02</span><span class="method get">GET</span></div>
+                        <h3>상품 목록</h3><code class="path">/api/products</code>
+                        <p class="description">현재 API는 전체 목록을 반환합니다. 문서의 카테고리·상태 필터는 아직 구현되지 않았습니다.</p>
+                        <form data-action="list-products"><button type="submit">상품 목록 조회</button></form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-05</span><span class="method get">GET</span></div>
+                        <h3>상품 상세</h3><code class="path">/api/products/{productId}</code>
+                        <p class="description">상품 ID로 상태와 판매자 정보를 확인합니다.</p>
+                        <form data-action="detail">
+                            <div class="field"><label for="detail-product-id">상품 ID</label><input id="detail-product-id" name="productId" data-shared="product" type="number" min="1" step="1" required></div>
+                            <button type="submit">상품 상세 조회</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-07</span><span class="method get">GET</span></div>
+                        <h3>최근 본 상품</h3><code class="path">/api/products/recent</code>
+                        <p class="description">현재 계정으로 본 상품을 최근 순서대로 최대 20개 조회합니다.</p>
+                        <form data-action="recent"><button type="submit">최근 본 상품 조회</button></form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="group" aria-labelledby="deal-heading">
+                <div class="group-title">
+                    <h2 id="deal-heading">3. 거래</h2>
+                    <p>구매자가 신청하고 판매자가 목록 확인 후 승인합니다.</p>
+                </div>
+                <div class="card-grid">
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-03</span><span class="method post">POST</span></div>
+                        <h3>거래 신청</h3><code class="path">/api/products/{productId}/application</code>
+                        <p class="description">구매자 계정을 선택하세요. 성공하면 거래 ID가 자동 입력됩니다.</p>
+                        <form data-action="apply">
+                            <div class="field"><label for="apply-product-id">상품 ID</label><input id="apply-product-id" name="productId" data-shared="product" type="number" min="1" step="1" required></div>
+                            <button type="submit">거래 신청 요청</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-06</span><span class="method get">GET</span></div>
+                        <h3>신청 목록</h3><code class="path">/api/products/{productId}/deals</code>
+                        <p class="description">판매자 계정으로 해당 상품의 신청을 조회합니다.</p>
+                        <form data-action="deals">
+                            <div class="field"><label for="deals-product-id">상품 ID</label><input id="deals-product-id" name="productId" data-shared="product" type="number" min="1" step="1" required></div>
+                            <button type="submit">신청 목록 조회</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-head"><span class="fr-id">FR-04</span><span class="method post">POST</span></div>
+                        <h3>거래 승인</h3><code class="path">/api/deals/{dealId}/approve</code>
+                        <p class="description">판매자 계정을 선택한 뒤 신청 목록의 거래 ID를 승인합니다.</p>
+                        <form data-action="approve">
+                            <div class="field"><label for="approve-deal-id">거래 ID</label><input id="approve-deal-id" name="dealId" data-shared="deal" type="number" min="1" step="1" required></div>
+                            <button type="submit">거래 승인 요청</button>
+                        </form>
+                        <p class="card-feedback" aria-live="polite">요청 전</p>
+                    </article>
+                </div>
+            </section>
+        </div>
+
+        <aside id="response-panel" class="panel response-panel" aria-live="polite" aria-label="최근 API 응답">
+            <h2>최근 API 응답</h2>
+            <p>상태 코드와 서버가 반환한 내용을 그대로 확인하세요. 로그인 토큰 값은 표시하지 않습니다.</p>
+            <div class="response-meta">
+                <span id="result-method">대기</span>
+                <span id="result-status">요청 전</span>
+            </div>
+            <div id="result-path">아직 요청하지 않았습니다.</div>
+            <pre id="result-body">왼쪽에서 API를 선택해 실행하세요.</pre>
+            <div class="response-footnote">요청 오류도 실제 응답으로 표시합니다. 로그인은 토큰 만료 전까지 두 화면에서 공유됩니다.</div>
+        </aside>
+    </main>
+</div>
+
+<script src="/assets/auth.js"></script>
+<script>
+    const auth = window.UsedTradeAuth;
+    const roleNames = { seller: '판매자', buyer: '구매자' };
+    const activeRole = document.getElementById('active-role');
+
+    function updateSessions() {
+        for (const role of ['seller', 'buyer']) {
+            const chip = document.getElementById(role + '-session');
+            const session = auth.getSession(role);
+            chip.textContent = session
+                ? roleNames[role] + ' · ' + session.nickname + ' (#' + session.userId + ')'
+                : roleNames[role] + ' · 로그인 전';
+            chip.classList.toggle('is-ready', Boolean(session));
+        }
+    }
+
+    activeRole.addEventListener('change', () => auth.setActiveRole(activeRole.value));
+    auth.subscribe(() => {
+        activeRole.value = auth.getActiveRole();
+        updateSessions();
+    });
+
+    function setSharedId(kind, value) {
+        document.querySelectorAll('input[data-shared="' + kind + '"]').forEach(input => {
+            input.value = value;
+        });
+    }
+
+    document.querySelectorAll('input[data-shared]').forEach(input => {
+        input.addEventListener('input', () => setSharedId(input.dataset.shared, input.value));
+    });
+
+    function showResult(card, method, path, status, data) {
+        const success = typeof status === 'number' && status >= 200 && status < 300;
+        const failure = typeof status === 'number' && !success;
+        const label = typeof status === 'number' ? 'HTTP ' + status : status;
+
+        const feedback = card.querySelector('.card-feedback');
+        feedback.textContent = label + ' · ' + method + ' ' + path;
+        feedback.className = 'card-feedback' + (success ? ' is-success' : failure ? ' is-error' : '');
+
+        document.getElementById('result-method').textContent = method;
+        const statusElement = document.getElementById('result-status');
+        statusElement.textContent = label;
+        statusElement.className = success ? 'is-success' : failure ? 'is-error' : '';
+        document.getElementById('result-path').textContent = path;
+        document.getElementById('result-body').textContent = data == null
+            ? '(응답 본문 없음)'
+            : typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+
+    async function send(form, method, path, options = {}) {
+        const card = form.closest('.card');
+        const headers = {};
+        const requestRole = activeRole.value;
+        if (options.auth) {
+            const session = auth.getSession(requestRole);
+            if (!session) {
+                showResult(card, method, path, '로그인 필요', {
+                    message: roleNames[requestRole] + ' 계정으로 먼저 로그인하세요.'
+                });
+                return null;
+            }
+            headers.Authorization = 'Bearer ' + session.accessToken;
+        }
+
+        let body;
+        if (options.body instanceof FormData) {
+            body = options.body;
+        } else if (options.body !== undefined) {
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify(options.body);
+        }
+
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        showResult(card, method, path, '요청 중', null);
+
+        try {
+            const response = await fetch(path, { method, headers, body });
+            const raw = await response.text();
+            let data = raw || null;
+            if (raw) {
+                try { data = JSON.parse(raw); } catch (_) { /* 일반 텍스트 응답 유지 */ }
+            }
+
+            const visibleData = options.redact ? options.redact(data) : data;
+            showResult(card, method, path, response.status, visibleData);
+            if (response.status === 401 && options.auth) {
+                auth.clearSession(requestRole);
+            }
+            return { response, data };
+        } catch (error) {
+            showResult(card, method, path, '네트워크 오류', { message: error.message });
+            return null;
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    const actions = {
+        signup: async form => {
+            const email = form.elements.email.value.trim();
+            const result = await send(form, 'POST', '/api/users', {
+                body: {
+                    email,
+                    password: form.elements.password.value,
+                    nickname: form.elements.nickname.value.trim()
+                }
+            });
+            if (result && result.response.ok) {
+                document.getElementById('login-email').value = email;
+                form.elements.password.value = '';
+            }
+        },
+        login: async form => {
+            const role = form.elements.role.value;
+            const result = await send(form, 'POST', '/api/users/login', {
+                body: { email: form.elements.email.value.trim(), password: form.elements.password.value },
+                redact: data => data && typeof data === 'object' && 'accessToken' in data
+                    ? { userId: data.userId, nickname: data.nickname, accessToken: '(화면에 표시하지 않음)', refreshToken: '(화면에 표시하지 않음)' }
+                    : data
+            });
+            if (result && result.response.ok && typeof result.data.accessToken === 'string') {
+                try {
+                    const saved = auth.saveSession(role, result.data);
+                    if (!saved) {
+                        form.closest('.card').querySelector('.card-feedback').textContent +=
+                            ' · 브라우저 저장 실패: 페이지 이동 후 다시 로그인해야 합니다.';
+                    }
+                } catch (error) {
+                    showResult(form.closest('.card'), 'POST', '/api/users/login', '응답 오류',
+                        { message: error.message });
+                }
+                form.elements.password.value = '';
+            }
+        },
+        logout: async form => {
+            const role = activeRole.value;
+            const result = await send(form, 'POST', '/api/users/logout', { auth: true });
+            if (result && result.response.ok) {
+                auth.clearSession(role);
+            }
+        },
+        'create-product': async form => {
+            const result = await send(form, 'POST', '/api/products', {
+                auth: true,
+                body: new FormData(form)
+            });
+            if (result && result.response.ok && result.data && result.data.id) {
+                setSharedId('product', result.data.id);
+                form.reset();
+            }
+        },
+        'list-products': async form => {
+            const result = await send(form, 'GET', '/api/products');
+            if (result && result.response.ok && Array.isArray(result.data)) {
+                form.closest('.card').querySelector('.card-feedback').textContent +=
+                    ' · ' + result.data.length + '건';
+            }
+        },
+        detail: form => send(form, 'GET', '/api/products/' + form.elements.productId.value,
+            { auth: Boolean(auth.getSession(activeRole.value)) }),
+        recent: form => send(form, 'GET', '/api/products/recent', { auth: true }),
+        apply: async form => {
+            const result = await send(form, 'POST',
+                '/api/products/' + form.elements.productId.value + '/application', { auth: true });
+            if (result && result.response.ok && result.data && result.data.dealId) {
+                setSharedId('deal', result.data.dealId);
+            }
+        },
+        deals: form => send(form, 'GET',
+            '/api/products/' + form.elements.productId.value + '/deals', { auth: true }),
+        approve: form => send(form, 'POST',
+            '/api/deals/' + form.elements.dealId.value + '/approve', { auth: true })
+    };
+
+    document.querySelectorAll('form[data-action]').forEach(form => {
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            actions[form.dataset.action](form);
+        });
+    });
+
+    activeRole.value = auth.getActiveRole();
+    updateSessions();
+</script>
+</body>
+</html>
