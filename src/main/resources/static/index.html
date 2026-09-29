@@ -2,53 +2,131 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>중고거래 앱 - 상품 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>이어쓰기 | 중고거래</title>
+    <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
-    <h1>중고거래 앱</h1>
-    <a href="register.html">새 상품 등록</a>
-    <hr>
-    <h2>상품 목록</h2>
-    <ul id="product-list">
-        <!-- JS를 통해 상품 목록이 여기에 렌더링됩니다 -->
-    </ul>
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/" aria-label="이어쓰기 홈"><span class="brand-mark">이</span>이어쓰기</a>
+        <nav class="site-nav" aria-label="화면 이동">
+            <a href="/" aria-current="page">상품 둘러보기</a>
+            <a href="/api-test.html">API 테스트</a>
+        </nav>
+    </div>
+</header>
 
-    <script>
-        async function loadProducts() {
-            try {
-                const response = await fetch('/api/products');
-                if (!response.ok) {
-                    throw new Error('상품을 불러오는데 실패했습니다.');
-                }
-                const products = await response.json();
-                const listElement = document.getElementById('product-list');
-                listElement.innerHTML = ''; // 로딩 텍스트 지우기
+<main class="shell">
+    <section class="hero" aria-labelledby="hero-heading">
+        <div>
+            <div class="eyebrow">SECONDHAND MARKET</div>
+            <h1 id="hero-heading">좋은 물건의 다음 이야기를 시작하세요.</h1>
+            <p>상품을 올리고, 마음에 드는 물건에 거래를 신청하세요. 화면의 상품과 거래 정보는 실제 서버에서 가져옵니다.</p>
+        </div>
+        <div class="hero-stats" aria-label="상품 현황">
+            <div class="hero-stat"><strong id="total-count">—</strong><span>전체 상품</span></div>
+            <div class="hero-stat"><strong id="selling-count">—</strong><span>판매 중</span></div>
+        </div>
+    </section>
 
-                products.forEach(product => {
-                    const li = document.createElement('li');
+    <section id="account-panel" class="panel account-panel" aria-labelledby="account-heading">
+        <div class="account-controls">
+            <div>
+                <h2 id="account-heading">내 계정</h2>
+                <p>판매자·구매자 계정을 각각 한 번 로그인하면 두 화면에서 함께 사용할 수 있습니다.</p>
+            </div>
+            <label for="site-role">현재 사용할 계정</label>
+            <select id="site-role">
+                <option value="seller">판매자 계정</option>
+                <option value="buyer">구매자 계정</option>
+            </select>
+            <div class="session-list" aria-live="polite">
+                <span id="site-seller-session" class="session-chip">판매자 · 로그인 전</span>
+                <span id="site-buyer-session" class="session-chip">구매자 · 로그인 전</span>
+            </div>
+            <button id="logout-button" class="small-action" type="button">현재 계정 로그아웃</button>
+        </div>
+        <div class="account-forms">
+            <h2>로그인</h2>
+            <p>위에서 계정 슬롯을 선택한 뒤 이메일과 비밀번호를 입력하세요.</p>
+            <form id="login-form">
+                <div class="field"><label for="login-email">이메일</label><input id="login-email" name="email" type="email" autocomplete="email" required></div>
+                <div class="field"><label for="login-password">비밀번호</label><input id="login-password" name="password" type="password" autocomplete="current-password" required></div>
+                <button class="primary-button" type="submit">로그인</button>
+            </form>
+            <p id="login-feedback" class="form-feedback" role="status"></p>
+            <details class="signup-box">
+                <summary>계정이 없나요? 회원가입</summary>
+                <form id="signup-form">
+                    <div class="field"><label for="signup-email">이메일</label><input id="signup-email" name="email" type="email" autocomplete="email" required></div>
+                    <div class="field"><label for="signup-password">비밀번호 (8~64자)</label><input id="signup-password" name="password" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></div>
+                    <div class="field"><label for="signup-nickname">닉네임</label><input id="signup-nickname" name="nickname" type="text" maxlength="50" required></div>
+                    <button class="secondary-button" type="submit">계정 만들기</button>
+                </form>
+                <p id="signup-feedback" class="form-feedback" role="status"></p>
+            </details>
+        </div>
+    </section>
 
-                    let imageHtml = '';
-                    if (product.imagePath) {
-                        imageHtml = `<br><img src="${product.imagePath}" alt="${product.title}" style="max-width: 200px; max-height: 200px;">`;
-                    }
+    <p id="page-notice" class="page-notice" role="status" aria-live="polite"></p>
 
-                    li.innerHTML = `
-                        <a href="detail.html?id=${product.id}"><strong>${product.title}</strong></a> - ${product.price} 원
-                        <br>
-                        카테고리: ${product.category} | 상태: ${product.status} | 판매자 ID: ${product.sellerId}
-                        <br>
-                        <p>${product.content}</p>
-                        ${imageHtml}
-                    `;
-                    listElement.appendChild(li);
-                });
-            } catch (error) {
-                document.getElementById('product-list').innerHTML = `<li>목록을 불러오는 중 오류가 발생했습니다: ${error.message}</li>`;
-            }
-        }
+    <div class="content-grid">
+        <section class="market-section" aria-labelledby="products-heading">
+            <div class="section-head">
+                <div>
+                    <h2 id="products-heading">지금 올라온 물건</h2>
+                    <p id="list-feedback" role="status">상품을 불러오는 중입니다.</p>
+                </div>
+                <button id="refresh-products" class="secondary-button" type="button">새로고침</button>
+            </div>
+            <div id="product-grid" class="product-grid" aria-live="polite"></div>
 
-        // 페이지 로드 시 상품 목록 불러오기
-        window.onload = loadProducts;
-    </script>
+            <section id="detail-panel" class="panel detail-panel" aria-labelledby="detail-title" hidden>
+                <div class="detail-top">
+                    <div id="detail-image" class="detail-image product-image">사진 없음</div>
+                    <div class="detail-copy">
+                        <span id="detail-status" class="status other">상태 확인 중</span>
+                        <h2 id="detail-title">상품 상세</h2>
+                        <p id="detail-price" class="detail-price"></p>
+                        <p id="detail-meta" class="detail-meta"></p>
+                        <p id="detail-description" class="detail-description"></p>
+                        <div id="detail-actions" class="detail-actions"></div>
+                    </div>
+                </div>
+                <div id="deal-panel" class="deal-panel" hidden>
+                    <h3>거래 신청 목록</h3>
+                    <div id="deal-list"></div>
+                </div>
+            </section>
+        </section>
+
+        <aside class="sidebar" aria-label="상품 등록">
+            <section class="panel form-panel">
+                <h2>내 물건 올리기</h2>
+                <p>현재 선택한 계정으로 판매 글을 등록합니다. PNG 또는 JPEG 사진 한 장이 필요합니다.</p>
+                <form id="product-form" class="product-form" enctype="multipart/form-data">
+                    <div class="field"><label for="product-title">상품 이름</label><input id="product-title" name="title" type="text" maxlength="200" required></div>
+                    <div class="field"><label for="product-content">설명</label><textarea id="product-content" name="content" required></textarea></div>
+                    <div class="field"><label for="product-category">카테고리</label><input id="product-category" name="category" type="text" maxlength="100" required></div>
+                    <div class="field"><label for="product-price">가격 (원)</label><input id="product-price" name="price" type="number" min="0" step="1" required></div>
+                    <div class="field"><label for="product-image">사진 1장</label><input id="product-image" name="image" type="file" accept="image/png,image/jpeg" required></div>
+                    <button class="primary-button" type="submit">상품 등록하기</button>
+                </form>
+                <p id="product-feedback" class="form-feedback" role="status"></p>
+            </section>
+            <section class="panel recent-panel" aria-labelledby="recent-heading">
+                <h2 id="recent-heading">최근 본 상품</h2>
+                <p>현재 선택한 계정의 최근 조회 기록입니다. 최대 20개를 보여줍니다.</p>
+                <button id="load-recent" class="secondary-button" type="button">최근 본 상품 조회</button>
+                <p id="recent-feedback" class="form-feedback" role="status"></p>
+                <div id="recent-list" class="recent-list"></div>
+            </section>
+        </aside>
+    </div>
+    <footer class="footer">기능별 요청과 응답을 보려면 <a href="/api-test.html">API 테스트 화면</a>으로 이동하세요.</footer>
+</main>
+<script src="/assets/auth.js"></script>
+<script src="/assets/site.js"></script>
 </body>
 </html>

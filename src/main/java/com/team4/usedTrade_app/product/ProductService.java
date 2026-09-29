@@ -1,32 +1,25 @@
 package com.team4.usedTrade_app.product;
 
 import com.team4.usedTrade_app.common.BadRequestException;
-import org.springframework.beans.factory.annotation.Value;
+import com.team4.usedTrade_app.common.NotFoundException;
 import com.team4.usedTrade_app.product.dto.ProductDetailResponse;
 import com.team4.usedTrade_app.product.dto.ProductRegisterRequest;
 import com.team4.usedTrade_app.product.dto.ProductResponse;
 import com.team4.usedTrade_app.user.User;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.List;
-import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-
-import java.util.List;
-import java.util.Objects;
-
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class ProductService {
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
 
     private final ProductRepository productRepository;
     private final RecentProductService recentProductService;
@@ -44,32 +38,32 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductDetailResponse getDetail(Integer productId, Integer userId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "상품을 찾을 수 없습니다."
-                ));
+                .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다."));
 
-        recentProductService.addRecentProduct(userId, productId);
-
+        if (userId != null) {
+            try {
+                recentProductService.addRecentProduct(userId, productId);
+            } catch (DataAccessException exception) {
+                log.warn("최근 본 상품 기록에 실패했습니다: userId={}, productId={}", userId, productId, exception);
+            }
+        }
         return ProductDetailResponse.from(product);
     }
-    // FR-07 최근 본 상품 조회
+
+    @Transactional(readOnly = true)
     public List<ProductDetailResponse> getRecentProducts(Integer userId) {
         List<Integer> productIds = recentProductService.getRecentProductIds(userId);
-
-        List<Product> products = productRepository.findAllById(productIds);
-
+        if (productIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Integer, Product> products = productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
         return productIds.stream()
-                .map(id -> products.stream()
-                        .filter(product -> product.getId().equals(id))
-                        .findFirst()
-                        .map(ProductDetailResponse::from)
-                        .orElse(null))
-                .filter(Objects::nonNull)
+                .map(products::get)
+                .filter(product -> product != null)
+                .map(ProductDetailResponse::from)
                 .toList();
     }
-
-
 
     @Transactional
     public ProductResponse registerProduct(User seller, ProductRegisterRequest request) {
@@ -102,8 +96,11 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> getProducts() {
+    public List<ProductResponse> getProducts(String category, ProductStatus status) {
+        String categoryFilter = category == null || category.isBlank() ? null : category.trim();
         return productRepository.findAll().stream()
+                .filter(product -> categoryFilter == null || product.getCategory().equals(categoryFilter))
+                .filter(product -> status == null || product.getStatus() == status)
                 .map(ProductResponse::from)
                 .toList();
     }

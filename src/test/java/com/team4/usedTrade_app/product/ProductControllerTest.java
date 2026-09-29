@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team4.usedTrade_app.auth.TokenProvider;
+import com.team4.usedTrade_app.auth.TokenRevocationService;
 import com.team4.usedTrade_app.deal.DealRepository;
 import com.team4.usedTrade_app.user.User;
 import com.team4.usedTrade_app.user.UserRepository;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -43,6 +45,9 @@ class ProductControllerTest {
 
     @Autowired
     private TokenProvider tokenProvider;
+
+    @MockitoBean
+    private TokenRevocationService tokenRevocationService;
 
     private User seller;
 
