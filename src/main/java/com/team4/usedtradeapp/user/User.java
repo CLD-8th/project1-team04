@@ -1,9 +1,7 @@
-package com.team4.usedTrade_app.user;
+package com.team4.usedtradeapp.user;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "user")
@@ -15,5 +13,5 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // 나머지 필드(email, password, nickname 등)는 인증 담당(김도현님)이 추가
+    // 인증 필드는 회원 기능에서 추가
 }

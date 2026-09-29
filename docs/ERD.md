@@ -17,7 +17,7 @@ erDiagram
 		
 		price int
 		status CHAR(20)
-		created_at DATETIME "DEFAULT CURRENT_TIMESTAMP"
+		created_at DATETIME
 	}
 	
 	deal {
@@ -28,8 +28,9 @@ erDiagram
 		status CHAR(20)
 	}
 	
-	user ||--o{ deal : "상품 등록 | 거래 요청"
-	product ||--|{ deal : "has"
+	user ||--o{ product : "sells"
+	user ||--o{ deal : "applies"
+	product ||--o{ deal : "receives"
 ```
 
 ### product.status 상태 표
@@ -51,3 +52,6 @@ erDiagram
 ### 제약 조건
 
 - 한 사용자는 하나의 상품에 동시에 하나의 거래 요청만 할 수 있음 (UK)
+- 상품의 판매자·제목·설명·카테고리·사진 경로·상태·생성 시각은 필수 값
+- 거래 신청의 상품·구매자·상태는 필수 값
+- 상품 생성 시각은 엔티티의 `@PrePersist`에서 설정

@@ -1,4 +1,4 @@
-package com.team4.usedTrade_app;
+package com.team4.usedtradeapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

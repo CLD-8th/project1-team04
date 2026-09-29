@@ -57,7 +57,7 @@
 | 프레임워크 버전 | Spring Boot 4.1.1 |
 | 그룹 | `com.team4` |
 | 이름 | `usedTrade-app` |
-| 패키지 | `com.team4.usedTrade_app` |
+| 패키지 | `com.team4.usedtradeapp` |
 | 포장 | Jar |
 | 개발 도구 버전 | 21 |
 | 최초 선택 의존성 | Spring Web |
@@ -65,7 +65,9 @@
 
 ## 9. 현재 구현 및 실행
 
-현재 브랜치는 Spring Boot 앱과 MySQL·Redis의 실행 기반을 제공한다. 상품·거래 API와 최근 본 상품 기능은 아직 구현되지 않았다.
+현재 브랜치에는 상품 상세 조회(FR-05)와 거래 신청·수락(FR-03·04)이 구현되어 있다. 로그인, 상품 등록, 신청 목록 조회, 최근 본 상품 기능은 아직 없다. FR-03·04는 세션에 `Integer` 타입 `userId`가 저장되어 있어야 호출할 수 있다.
+
+Docker Compose는 `compose` 프로파일에서 JPA 스키마를 `update`로 관리한다. `prod` 프로파일은 기존 스키마를 `validate`로 확인하며, 스키마 변경은 별도 절차가 필요하다.
 
 Docker Engine과 Docker Compose가 설치된 환경에서 다음 순서로 실행한다.
 
