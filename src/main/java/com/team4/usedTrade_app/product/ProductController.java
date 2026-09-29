@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -27,5 +25,21 @@ public class ProductController {
     @GetMapping("/recent")
     public List<ProductDetailResponse> recentProducts() {
         return productService.getRecentProducts(1);
+    }
+
+    // FR-01 게시글 등록
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<ProductResponse> registerProduct(
+            @LoginUser User user,
+            @Valid @ModelAttribute ProductRegisterRequest request) {
+        ProductResponse response = productService.registerProduct(user, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // FR-02 게시글 목록
+    @GetMapping
+    public ResponseEntity<List<ProductResponse>> getProducts() {
+        List<ProductResponse> responses = productService.getProducts();
+        return ResponseEntity.ok(responses);
     }
 }
