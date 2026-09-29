@@ -8,3 +8,6 @@ spring:
       ddl-auto: create-drop
   autoconfigure:
     exclude: org.springframework.boot.session.data.redis.autoconfigure.SessionDataRedisAutoConfiguration
+
+app:
+  upload-dir: ./build/test-uploads
