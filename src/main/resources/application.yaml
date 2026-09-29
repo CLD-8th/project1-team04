@@ -6,12 +6,8 @@ spring:
     username: used_trade
     password: used_trade_password
     driver-class-name: com.mysql.cj.jdbc.Driver
-  sql:
-    init:
-      mode: always
   jpa:
     open-in-view: false
-    defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
     show-sql: true
