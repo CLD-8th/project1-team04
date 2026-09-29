@@ -1,6 +1,4 @@
 package com.team4.usedTrade_app.product;
-import com.team4.usedTrade_app.auth.LoginUser;
-package com.team4.usedTrade_app.product;
 
 import com.team4.usedTrade_app.auth.LoginUser;
 import com.team4.usedTrade_app.product.dto.*;
